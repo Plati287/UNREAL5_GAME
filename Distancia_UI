@@ -1,0 +1,99 @@
+UI_Gameplay.h
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "UI_gameplay.generated.h"
+
+UCLASS()
+class ASYLUM_LEARN_API AUI_gameplay : public AActor
+{
+	GENERATED_BODY()
+	
+public:	
+	AUI_gameplay();
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(EditAnywhere, Category="UI")
+	TSubclassOf<class UUserWidget> ClaseHUD;
+	
+	UPROPERTY(EditAnywhere, Category="UI")
+	TSubclassOf<class UUserWidget> ClasePrompE;
+	
+	UPROPERTY(EditAnywhere, Category="Mediciones")
+	float distancia_minima = 300.0f;
+	
+	UPROPERTY(EditAnywhere, Category="Mediciones")
+	float distancia_jugador = 0.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="interaccion")
+	class AActor*Objeto3DReferencia;
+	
+	UPROPERTY()
+	class UUserWidget*InstanciaPrompE; //las UI que luego cambiemos el estado publico-oculto oculto-publico
+	
+	
+	
+	
+
+};
+
+UI_gameplay.cpp
+
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#include "UI_gameplay.h"
+#include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
+#include "InputCoreTypes.h"
+
+
+// Sets default values
+AUI_gameplay::AUI_gameplay()
+{
+	// Set this actor to call Tick() every frame. You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+}
+
+// Called when the game starts or when spawned
+void AUI_gameplay::BeginPlay()
+{
+	Super::BeginPlay();
+    
+	if (ClaseHUD)
+	{
+		CreateWidget<UUserWidget>(GetWorld(), ClaseHUD)->AddToViewport();
+	}
+    
+	if (ClasePrompE)
+	{
+		InstanciaPrompE = CreateWidget<UUserWidget>(GetWorld(), ClasePrompE);
+		InstanciaPrompE->AddToViewport();
+		InstanciaPrompE->SetVisibility(ESlateVisibility::Hidden);
+		
+	}
+}
+
+void AUI_gameplay::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// Si la instancia del widget no existe o no has asignado el objeto 3D, no hacemos nada para evitar crasheos
+	if (!InstanciaPrompE || !Objeto3DReferencia) return;
+
+	// Medimos la distancia desde el Objeto 3D de referencia hasta el Jugador
+	distancia_jugador = Objeto3DReferencia->GetDistanceTo(UGameplayStatics::GetPlayerPawn(this, 0));
+
+	if (distancia_jugador <= distancia_minima)
+	{
+		InstanciaPrompE->SetVisibility(ESlateVisibility::Visible);
+		
+	}
+	else
+	{
+		InstanciaPrompE->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
